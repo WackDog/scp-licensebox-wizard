@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Generate SCP Wiki licensebox markup from Wikimedia Commons file links." />
+  <title>SCP Licensebox Maker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="hero" aria-labelledby="page-title">
+      <h1 id="page-title">SCP Licensebox Wizard</h1>
+      <p id="page-subtitle" class="subtitle">
+        Paste Wikimedia Commons links, fetch attribution metadata, review the result, then copy clean Wikidot licensebox markup.
+      </p>
+    </header>
+
+    <section class="notice-card" aria-labelledby="notes-heading">
+      <div class="notice-mark" aria-hidden="true">!</div>
+      <div>
+        <h2 id="notes-heading">Review before copying</h2>
+        <p>
+          This tool drafts attribution from Commons metadata. Author, source, and license fields can be incomplete, HTML-heavy, or multi-licensed. Please check yellow/red items manually.
+        </p>
+        <a class="text-link" href="https://commons.wikimedia.org/wiki/Special:ApiSandbox#action=query&format=json&prop=imageinfo&titles=File%3AExample.jpg&iiprop=url%7Csize%7Cmime%7Cextmetadata" target="_blank" rel="noreferrer">Commons API sandbox ↗</a>
+      </div>
+    </section>
+
+    <section class="card input-panel" aria-labelledby="paste-heading">
+      <div class="section-heading">
+        <p class="type">Step 1</p>
+        <h2 id="paste-heading">Paste Commons links</h2>
+        <p class="hint">Accepts Commons file pages, <code>File:</code> titles, Special:FilePath links, and raw upload.wikimedia.org URLs.</p>
+      </div>
+
+      <textarea id="link-input" class="main-input" rows="6" placeholder="https://commons.wikimedia.org/wiki/File:Example.jpg"></textarea>
+
+      <div class="button-row">
+        <button type="button" id="fetch-button">↻ Fetch metadata</button>
+        <button type="button" id="load-example" class="secondary">Load example</button>
+      </div>
+
+      <div class="detected-wrap">
+        <p class="status" id="detected-count">Detected 0 file titles.</p>
+        <div class="tags" id="detected-list" aria-live="polite"></div>
+      </div>
+      <div class="error-box hidden" id="error-box" role="alert"></div>
+    </section>
+
+    <section class="summary-grid hidden" id="summary-grid" aria-label="Summary">
+      <div class="summary-card"><strong id="count-total">0</strong><span>files</span></div>
+      <div class="summary-card ok"><strong id="count-green">0</strong><span>likely OK</span></div>
+      <div class="summary-card warn"><strong id="count-yellow">0</strong><span>review</span></div>
+      <div class="summary-card bad"><strong id="count-red">0</strong><span>blocked / missing</span></div>
+    </section>
+
+    <section class="card hidden" id="results-panel" aria-labelledby="review-heading">
+      <div class="section-heading">
+        <p class="type">Step 2</p>
+        <h2 id="review-heading">Review and edit</h2>
+        <p class="hint">Change filenames to match the files uploaded to your SCP page, then verify any yellow or red items.</p>
+      </div>
+      <div class="results-stack" id="results-stack"></div>
+    </section>
+
+    <section class="card output-panel hidden" id="output-panel" aria-labelledby="markup-heading">
+      <p class="type">Step 3</p>
+      <div class="result-header output-header">
+        <div class="result-main">
+          <h2 id="markup-heading">Copy Wikidot markup</h2>
+          <p class="hint">Paste this below your article content, then add the <code>_licensebox</code> tag.</p>
+        </div>
+        <div class="button-group">
+          <button type="button" id="copy-button">Copy</button>
+        </div>
+      </div>
+
+      <div class="toggle-row options-row">
+        <label><input type="checkbox" id="include-separators" /> Include ----- separator lines</label>
+        <label><input type="checkbox" id="include-empty-fields" /> Include empty optional fields</label>
+      </div>
+
+      <textarea class="output" id="output" readonly rows="14"></textarea>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
