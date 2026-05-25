@@ -211,6 +211,14 @@
       };
     }
 
+    if (/cc\s*by(?:\s*-\s*sa)?\s*1\.0/i.test(text)) {
+      return {
+        level: 'red',
+        label: 'Not compatible',
+        notes: ['CC BY-SA 1.0 is not compatible because it is not forward-compatible with the SCP Wiki license.'],
+      };
+    }
+
     if (/cc0|public domain|pd-|pdm|copyrighted false/.test(text)) {
       return {
         level: 'green',
