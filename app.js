@@ -34,6 +34,7 @@
     resultsStack: document.querySelector('#results-stack'),
     outputPanel: document.querySelector('#output-panel'),
     output: document.querySelector('#output'),
+    copyWarning: document.querySelector('#copy-warning'),
     includeSeparators: document.querySelector('#include-separators'),
     includeEmptyFields: document.querySelector('#include-empty-fields'),
     copyButton: document.querySelector('#copy-button'),
@@ -433,6 +434,46 @@
   }
 
   //error handling and such 
+
+  const REQUIRED_LICENSEBOX_FIELDS = [
+    ['filename', 'Filename'],
+    ['author', 'Author'],
+    ['licenseShortName', 'License'],
+    ['sourceLink', 'Source link'],
+  ];
+
+  const REQUIRED_FIELD_NAMES = new Set(
+    REQUIRED_LICENSEBOX_FIELDS.map(([key]) => key)
+  );
+
+  function isMissingLicenseboxValue(value) {
+    const text = String(value || '').trim();
+
+    return (
+      !text ||
+      text === '—' ||
+      /unknown/i.test(text) ||
+      /verify manually/i.test(text)
+    );
+  }
+
+  function getItemProblems(item) {
+    return REQUIRED_LICENSEBOX_FIELDS
+      .filter(([key]) => isMissingLicenseboxValue(item[key]))
+      .map(([, label]) => label);
+  }
+
+  function getAllProblems(items) {
+    return items.flatMap((item, index) => {
+      const name = item.filename || item.name || `Image ${index + 1}`;
+
+      return getItemProblems(item).map((field) => ({
+        image: name,
+        field,
+      }));
+    });
+  }
+
   function setError(message) {
     if (!message) {
       els.errorBox.textContent = '';
@@ -461,10 +502,27 @@
   function fieldHtml(item, name, label, value, options) {
     const safeOptions = options || {};
     const safeValue = escapeHtml(value || '');
+    const isRequired = REQUIRED_FIELD_NAMES.has(name);
+    const hasProblem = isRequired && isMissingLicenseboxValue(value);
+
+    const fieldClass = 'field' + (hasProblem ? ' has-problem' : '');
+    const problemNote = hasProblem
+      ? '<small class="field-problem-note">❌ Required before copying</small>'
+      : '';
+
     if (safeOptions.textarea) {
-      return '<label class="field"><span>' + escapeHtml(label) + '</span><textarea data-field="' + escapeHtml(name) + '" rows="3" placeholder="' + escapeHtml(safeOptions.placeholder || '') + '">' + safeValue + '</textarea></label>';
+      return '<label class="' + fieldClass + '">' +
+        '<span>' + escapeHtml(label) + '</span>' +
+        '<textarea data-field="' + escapeHtml(name) + '" rows="3" placeholder="' + escapeHtml(safeOptions.placeholder || '') + '">' + safeValue + '</textarea>' +
+        problemNote +
+        '</label>';
     }
-    return '<label class="field"><span>' + escapeHtml(label) + '</span><input data-field="' + escapeHtml(name) + '" value="' + safeValue + '" placeholder="' + escapeHtml(safeOptions.placeholder || '') + '" /></label>';
+
+    return '<label class="' + fieldClass + '">' +
+      '<span>' + escapeHtml(label) + '</span>' +
+      '<input data-field="' + escapeHtml(name) + '" value="' + safeValue + '" placeholder="' + escapeHtml(safeOptions.placeholder || '') + '" />' +
+      problemNote +
+      '</label>';
   }
 
   function renderResultCard(item) {
@@ -545,12 +603,38 @@
     els.outputPanel.classList.toggle('hidden', state.items.length === 0);
   }
 
+  function updateCopyWarning() {
+    if (!els.copyWarning || !els.output) return;
+
+    const problems = getAllProblems(state.items);
+
+    if (!problems.length) {
+      els.copyWarning.classList.add('hidden');
+      els.copyWarning.innerHTML = '';
+      els.output.classList.remove('has-problems');
+      return;
+    }
+
+    const problemList = problems
+      .map((problem) => '<p>❌ ' + escapeHtml(problem.image) + ': missing ' + escapeHtml(problem.field) + '</p>')
+      .join('');
+
+    els.copyWarning.innerHTML =
+      '<p>Fix these fields before copying the licensebox:</p>' +
+      problemList;
+
+    els.copyWarning.classList.remove('hidden');
+    els.output.classList.add('has-problems');
+  }
+
   function renderOutput() {
     const output = buildLicenseBox();
     els.output.value = output;
     const lineCount = output ? output.split('\n').length + 2 : 14;
     els.output.rows = String(Math.max(14, lineCount));
     els.copyButton.disabled = !output;
+
+    updateCopyWarning();
   }
 
   function renderLoading() {
@@ -662,13 +746,36 @@
   els.resultsStack.addEventListener('input', (event) => {
     const field = event.target.getAttribute('data-field');
     if (!field) return;
+
     const card = event.target.closest('[data-id]');
     if (!card) return;
+
     updateItem(card.getAttribute('data-id'), { [field]: event.target.value });
     renderSummary();
     renderOutput();
-  });
 
+    const fieldWrapper = event.target.closest('.field');
+    if (!fieldWrapper) return;
+
+    const hasProblem =
+      REQUIRED_FIELD_NAMES.has(field) &&
+      isMissingLicenseboxValue(event.target.value);
+
+    fieldWrapper.classList.toggle('has-problem', hasProblem);
+
+    let note = fieldWrapper.querySelector('.field-problem-note');
+
+    if (hasProblem && !note) {
+      note = document.createElement('small');
+      note.className = 'field-problem-note';
+      note.textContent = '❌ Required before copying';
+      fieldWrapper.appendChild(note);
+    }
+
+    if (!hasProblem && note) {
+      note.remove();
+    }
+  });
 
   els.resultsStack.addEventListener('change', (event) => {
     const field = event.target.getAttribute('data-field');

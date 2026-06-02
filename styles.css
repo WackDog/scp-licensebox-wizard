@@ -559,6 +559,42 @@ code {
   min-height: 5.75rem;
 }
 
+/*02.06.26: added new warning*/
+.field.has-problem input,
+.field.has-problem textarea {
+  border-color: #900;
+  box-shadow: 0 0 0 2px rgba(153, 0, 0, 0.14);
+  background: #fff7f7;
+}
+
+.field-problem-note {
+  color: #900;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.copy-warning {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border: 0.12rem solid #900;
+  border-radius: 0.55rem;
+  background: #fff7f7;
+  color: #900;
+  font-weight: 700;
+}
+
+.copy-warning p {
+  margin: 0.25rem 0;
+  color: #900;
+}
+
+.output.has-problems {
+  border-color: #900;
+  box-shadow: 0 0 0 2px rgba(153, 0, 0, 0.14);
+}
+/*----------*/
+
 .raw-details,
 .licensebox-details {
   border: 1px dashed var(--line);
